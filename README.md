@@ -22,14 +22,7 @@ python3 -m http.server 8002
 
 ### Конфигурация HAProxy (L4)
 
-```cfg
-listen python_l4
-    bind :9000
-    mode tcp
-    balance roundrobin
-    server py1 127.0.0.1:8001 check
-    server py2 127.0.0.1:8002 check
-```
+[haproxy/haproxy-l4.cfg](haproxy/haproxy-l4.cfg)
 
 ---
 
@@ -69,49 +62,30 @@ python3 -m http.server 8003
 В файл `/etc/hosts` добавлена запись:
 
 ```text
-127.0.0.1 localhost.local
+127.0.0.1 example.local
 ```
 
 ---
 
 ### Конфигурация HAProxy (L7 + ACL)
 
-```cfg
-frontend http_front
-    bind :9001
-    mode http
-    acl host_example hdr(host) -i example.local
-    use_backend python_wrr if host_example
-    default_backend deny_all
-
-backend python_wrr
-    mode http
-    balance roundrobin
-    option httpchk GET /
-    server py1 127.0.0.1:8001 weight 2 check
-    server py2 127.0.0.1:8002 weight 3 check
-    server py3 127.0.0.1:8003 weight 4 check
-
-backend deny_all
-    mode http
-    http-request deny
-```
+[haproxy/haproxy-l7-weighted.cfg](haproxy/haproxy-l7-weighted.cfg)
 
 ---
 
 ### Проверка работы
 
-#### Запрос с доменом localhost.local
+#### Запрос с доменом example.local
 
 ```bash
-curl http://localhost.local:9001
+curl http://example.local:9001
 ```
 
 Трафик распределяется между серверами с учётом заданных весов.
 
 ---
 
-#### Запрос без домена localhost.local
+#### Запрос без домена example.local
 
 ```bash
 curl http://localhost:9001
